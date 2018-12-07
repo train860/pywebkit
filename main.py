@@ -9,7 +9,6 @@ import configparser
 import sys
 import glob
 import serial
-import serial.tools.list_ports
 
 ''' 串口工具 '''
 class SerialTool():
