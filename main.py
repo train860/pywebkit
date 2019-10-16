@@ -8,9 +8,10 @@ from PyQt5.QtWebEngineWidgets import *
 import configparser
 import sys
 import glob
-import serial
+#import serial
 
 ''' 串口工具 '''
+'''
 class SerialTool():
     def __init__(self):
         self.ser = serial.Serial()
@@ -37,13 +38,17 @@ class SerialTool():
             return str
         else:
             return str.decode("utf-8")  # +DTUID:cypyzx001
-
+'''
 
 '''Js 桥接'''
 '''前端html需要引入qwebchannel.js'''
 '''http://doc.qt.io/archives/qt-5.10/qtwebengine-webenginewidgets-markdowneditor-example.html'''
+
+'''供js调用'''
+'''
+
 class PythonJS(QObject):
-    '''供js调用'''
+    
     __pyqtSignals__ = ("contentChanged(const QString &)")
 
     #初始化
@@ -72,7 +77,7 @@ class PythonJS(QObject):
             except (OSError, serial.SerialException):
                 pass
         return data
-
+'''
 class CustomQwebview(QWebEngineView):
     def __init__(self,parent=None):
         super(CustomQwebview,self).__init__(parent)
@@ -112,6 +117,7 @@ if __name__ == '__main__':
     #url=QUrl("http://192.168.199.135:8090/cect29_guard/")
     url = QUrl(serverUri)
     wv =CustomQwebview()
+
     wv._want_to_close=True
     #去掉标题栏
     #wv.setWindowFlags(Qt.FramelessWindowHint)
@@ -121,12 +127,12 @@ if __name__ == '__main__':
     #screen = QDesktopWidget().availableGeometry()
     #wv.setFixedSize(screen.width(), screen.height())
 
-    pjs = PythonJS()
+    #pjs = PythonJS()
 
     page=wv.page()
-    channel = QWebChannel(page)
-    channel.registerObject('bridge', pjs)
-    page.setWebChannel(channel)
+    #channel = QWebChannel(page)
+    #channel.registerObject('bridge', pjs)
+    #page.setWebChannel(channel)
     wv.page().setUrl(url)
     wv.show()
     app.exec()
