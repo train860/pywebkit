@@ -31,6 +31,10 @@ class MyLabel(QLabel):
     def mousePressEvent(self,event):
         print("label pos",self.geometry())
         pass
+class MyImage(QImage):
+    def __init__(self, *args):
+        super(QImage,self).__init__(*args)
+
 class TextEditDemo(QWidget):
     def __init__(self,parent=None):
         super(TextEditDemo, self).__init__(parent)
@@ -44,9 +48,7 @@ class TextEditDemo(QWidget):
         #self.textEdit = MyTextEdit(w)
         self.textEdit = MyTextEdit("test1")
         self.textEdit.setContentsMargins(QMargins(0,0,0,0))
-
-
-
+        self.textEdit.setPlaceholderText("type your text")
 
         #创建两个按钮
         self.btnPress1=QPushButton('显示文本')
@@ -74,10 +76,12 @@ class TextEditDemo(QWidget):
         #w.setStyleSheet("background:grey")
         w.setLayout(self.mylayout)
         w.setContentsMargins(0,0,0,0)
-
+        self.scroll.setFrameStyle(QFrame.NoFrame)
         self.scroll.setWidget(w)
         self.scroll.setWidgetResizable(True)
         self.scroll.setContentsMargins(0,0,0,0)
+        self.scroll.setStyleSheet("background:white")
+
         #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
         l2=QHBoxLayout()
@@ -99,6 +103,7 @@ class TextEditDemo(QWidget):
         self.btnPress2.clicked.connect(self.btnPress2_clicked)
         self.btnPress3.clicked.connect(self.btnPress3_clicked)
         self.btnPress4.clicked.connect(self.btnPress4_clicked)
+
         self.addEventListener(self.textEdit)
 
     def addEventListener(self,textEdit):
@@ -219,19 +224,12 @@ class TextEditDemo(QWidget):
             table.removeRows(0, table.rows())
 
     def insertLabel(self):
-        url = "http://photocdn.sohu.com/20120128/Img333056814.jpg"
-        res = requests.get(url)
-        img = QImage.fromData(res.content)
+        img = QImage("./test.jpg")
 
-        img=img.scaled(QSize(50,50),Qt.KeepAspectRatio);
-        qlabel = MyLabel(self.textEdit)
-        qlabel.setFixedWidth(300)
-        qlabel.setPixmap(QPixmap.fromImage(img))
-        qlabel.setStyleSheet("background:white")
-        qlabel.setAlignment(Qt.AlignCenter)
-        rect=self.textEdit.cursorRect()
-        qlabel.show()
-        qlabel.move(rect.left(), rect.top());
+        cursor = self.textEdit.textCursor()
+        cursor.insertBlock()
+
+        cursor.insertImage(img, "myimage");
     @pyqtSlot(str)
     def OnMousePressed(self,text):
 
