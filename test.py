@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import requests
 from PIL import Image
+import chardet
 
 class MyTextEdit(QTextEdit):
     mousePressSignal = pyqtSignal(str)
@@ -43,7 +44,7 @@ class TextEditDemo(QWidget):
         #定义窗口的初始大小
         self.resize(300,270)
         #创建多行文本框
-        self.scroll=QScrollArea()
+        self.scroll=QScrollArea(objectName="ScrollView")
         w= QWidget()
         #self.textEdit = MyTextEdit(w)
         self.textEdit = MyTextEdit("test1")
@@ -80,8 +81,12 @@ class TextEditDemo(QWidget):
         self.scroll.setWidget(w)
         self.scroll.setWidgetResizable(True)
         self.scroll.setContentsMargins(0,0,0,0)
-        self.scroll.setStyleSheet("background:white")
 
+        with open("Data/ScrollBar.qss", "rb") as fp:
+            content = fp.read()
+            encoding = chardet.detect(content) or {}
+            content = content.decode(encoding.get("encoding") or "utf-8")
+        self.scroll.setStyleSheet(content)
         #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
         l2=QHBoxLayout()
