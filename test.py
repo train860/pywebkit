@@ -11,21 +11,25 @@ from PIL import Image
 class MyTextEdit(QTextEdit):
     mousePressSignal = pyqtSignal(str)
     contextMenuSignal = pyqtSignal(QMenu,QPoint)
-    def __init__(self, *args):
-        super(QTextEdit,self).__init__(*args)
+
+    def __init__(self, key):
+        super(QTextEdit,self).__init__()
+        self.key=key
+        self.setFrameStyle(QFrame.NoFrame)
     def mousePressEvent(self, event):
         self.mousePressSignal.emit("345")
         print(event.pos())
-        QTextEdit.mouseMoveEvent(self,event)
+        QTextEdit.mousePressEvent(self,event)
     def contextMenuEvent(self,event):
         menu=self.createStandardContextMenu()
         print("contextMenuEvent",event.pos())
         self.contextMenuSignal.emit(menu,event.globalPos())
 
-class MyImage(QImage):
+class MyLabel(QLabel):
     def __init__(self, *args):
-        super(QImage,self).__init__(*args)
+        super(QLabel,self).__init__(*args)
     def mousePressEvent(self,event):
+        print("label pos",self.geometry())
         pass
 class TextEditDemo(QWidget):
     def __init__(self,parent=None):
@@ -35,14 +39,20 @@ class TextEditDemo(QWidget):
         #定义窗口的初始大小
         self.resize(300,270)
         #创建多行文本框
-
+        self.scroll=QScrollArea()
         w= QWidget()
         #self.textEdit = MyTextEdit(w)
-        self.textEdit = MyTextEdit()
+        self.textEdit = MyTextEdit("test1")
+        self.textEdit.setContentsMargins(QMargins(0,0,0,0))
+
+
+
+
         #创建两个按钮
         self.btnPress1=QPushButton('显示文本')
         self.btnPress2=QPushButton('显示HTML')
         self.btnPress3 = QPushButton('删除table')
+        self.btnPress4 = QPushButton('添加label')
         '''
         self.label=QLabel(w)
         self.label.setText("test")
@@ -50,25 +60,55 @@ class TextEditDemo(QWidget):
         self.label.setVisible(False)
         '''
         #实例化垂直布局
-        layout=QVBoxLayout()
-        #相关控件添加到垂直布局中
-        layout.addWidget(self.textEdit)
-        layout.addWidget(self.btnPress1)
-        layout.addWidget(self.btnPress2)
-        layout.addWidget(self.btnPress3)
+        self.layout=QVBoxLayout()
 
+        self.layout.setContentsMargins(QMargins(0,0,0,0))
+        self.layout.setSpacing(0)
+        #相关控件添加到垂直布局中
+
+        self.mylayout=QVBoxLayout()
+        self.mylayout.setContentsMargins(QMargins(0,0,0,0))
+        self.mylayout.setSpacing(0)
+        self.mylayout.addWidget(self.textEdit)
+        self.mylayout.insertStretch(-1,0)
+        #w.setStyleSheet("background:grey")
+        w.setLayout(self.mylayout)
+        w.setContentsMargins(0,0,0,0)
+
+        self.scroll.setWidget(w)
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setContentsMargins(0,0,0,0)
+        #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+        l2=QHBoxLayout()
+        l2.addWidget(self.btnPress1)
+        l2.addWidget(self.btnPress2)
+        l2.addWidget(self.btnPress3)
+        l2.addWidget(self.btnPress4)
+        w2=QWidget()
+        w2.setLayout(l2)
+
+        self.layout.addWidget(w2)
+        self.layout.addWidget(self.scroll)
         #设置布局
-        self.setLayout(layout)
+        self.setLayout(self.layout)
+
 
         #将按钮的点击信号与相关的槽函数进行绑定，点击即触发
         self.btnPress1.clicked.connect(self.btnPress1_clicked)
         self.btnPress2.clicked.connect(self.btnPress2_clicked)
         self.btnPress3.clicked.connect(self.btnPress3_clicked)
+        self.btnPress4.clicked.connect(self.btnPress4_clicked)
+        self.addEventListener(self.textEdit)
 
-        self.textEdit.selectionChanged.connect(self.onSelectionChanged)
-        self.textEdit.cursorPositionChanged.connect(self.onCursorPositionChanged)
-        self.textEdit.mousePressSignal.connect(self.OnMousePressed)
-        self.textEdit.contextMenuSignal.connect(self.OnContextMenuEvent)
+    def addEventListener(self,textEdit):
+
+        textEdit.setFixedHeight(28)
+        textEdit.textChanged.connect(lambda: self.onTextChanged(textEdit.key))
+        textEdit.selectionChanged.connect(lambda:self.onSelectionChanged(textEdit.key))
+        textEdit.cursorPositionChanged.connect(self.onCursorPositionChanged)
+        textEdit.mousePressSignal.connect(self.OnMousePressed)
+        textEdit.contextMenuSignal.connect(self.OnContextMenuEvent)
     def isCursorInTable(self):
         textCursor = self.textEdit.textCursor()
         table = textCursor.currentTable()
@@ -90,12 +130,29 @@ class TextEditDemo(QWidget):
             #r = self.textEdit.cursorRect()
             #self.label.move(r.x(), r.y())
             '''
-    def onSelectionChanged(self):
+
+    def onTextChanged(self,key):
+
+        document=self.textEdit.document()
+        newHeight = document.size().height()+5
+        if newHeight != self.textEdit.height():
+            self.textEdit.setFixedHeight(newHeight)
+
+        #self.scroll.verticalScrollBar().setValue(self.scroll.verticalScrollBar().maximum() + 100)
+
+    def onSelectionChanged(self,name):
+        print("onSelectionChanged",name)
         textCursor=self.textEdit.textCursor()
         selectedHtml=textCursor.selection().toHtml()
-        print(selectedHtml)
+        #print(selectedHtml)
 
     def btnPress1_clicked(self):
+        '''
+        textEdit= MyTextEdit("test2")
+        self.addEventListener(textEdit)
+        self.layout.insertWidget(1,textEdit)
+        #self.layout.removeWidget(self.btnPress3)
+
         html=self.textEdit.toHtml()
         print(html)
         print(self.textEdit.cursorRect())
@@ -103,14 +160,27 @@ class TextEditDemo(QWidget):
         img=QImage("./test.jpg")
 
         cursor = self.textEdit.textCursor()
-        #cursor.insertBlock()
+        cursor.insertBlock()
 
-        f=QTextFrameFormat()
-        f.setBorder(1)
-        f.setBorderStyle(QTextFrameFormat.BorderStyle_Solid)
-        textFrame=cursor.insertFrame(f)
-        textFrame.firstCursorPosition().insertImage(img, "myimage");
-        #cursor.insertImage(img, "myimage");
+        cursor.insertImage(img, "myimage");
+        '''
+        self.insertImage()
+    def insertImage(self):
+        url = "http://photocdn.sohu.com/20120128/Img333056814.jpg"
+        res = requests.get(url)
+        img = QImage.fromData(res.content)
+
+        img=img.scaled(QSize(50,50),Qt.KeepAspectRatio);
+        pixmap = QPixmap.fromImage(img)
+        l1 = MyLabel(self)
+        l1.setPixmap(pixmap)
+        l1.setStyleSheet("background:white")
+        l1.setAlignment(Qt.AlignCenter)
+        self.mylayout.insertWidget(1, l1)
+        textEdit = MyTextEdit("test2")
+        self.addEventListener(textEdit)
+        self.mylayout.insertWidget(2, textEdit)
+        textEdit.setFocus()
 
     def btnPress2_clicked(self):
         '''
@@ -140,12 +210,28 @@ class TextEditDemo(QWidget):
 
     def btnPress3_clicked(self):
         self.deleteTable()
-
+    def btnPress4_clicked(self):
+        self.insertLabel()
     def deleteTable(self):
         textCursor = self.textEdit.textCursor()
         table = textCursor.currentTable()
         if table != None:
             table.removeRows(0, table.rows())
+
+    def insertLabel(self):
+        url = "http://photocdn.sohu.com/20120128/Img333056814.jpg"
+        res = requests.get(url)
+        img = QImage.fromData(res.content)
+
+        img=img.scaled(QSize(50,50),Qt.KeepAspectRatio);
+        qlabel = MyLabel(self.textEdit)
+        qlabel.setFixedWidth(300)
+        qlabel.setPixmap(QPixmap.fromImage(img))
+        qlabel.setStyleSheet("background:white")
+        qlabel.setAlignment(Qt.AlignCenter)
+        rect=self.textEdit.cursorRect()
+        qlabel.show()
+        qlabel.move(rect.left(), rect.top());
     @pyqtSlot(str)
     def OnMousePressed(self,text):
 
@@ -163,4 +249,5 @@ if __name__ == '__main__':
     app=QApplication(sys.argv)
     win=TextEditDemo()
     win.show()
+
     sys.exit(app.exec_())
