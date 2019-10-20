@@ -42,7 +42,8 @@ class TextEditDemo(QWidget):
         self.setWindowTitle('QTextEdit 例子')
 
         #定义窗口的初始大小
-        self.resize(300,270)
+        self.resize(800,600)
+        self.setMinimumSize(800,600)
         #创建多行文本框
         self.scroll=QScrollArea(objectName="ScrollView")
         w= QWidget()
@@ -128,6 +129,11 @@ class TextEditDemo(QWidget):
         textCursor = self.textEdit.textCursor()
         table=textCursor.currentTable()
         if table!=None:
+            c=table.cellAt(0,0).firstCursorPosition()
+
+            print("table info",self.textEdit.cursorRect(c), table.property("id"))
+
+            self.textEdit.setReadOnly(True)
             pass
             '''
             #可以获取td的位置
@@ -140,7 +146,9 @@ class TextEditDemo(QWidget):
             #r = self.textEdit.cursorRect()
             #self.label.move(r.x(), r.y())
             '''
-
+        else:
+            if self.textEdit.isReadOnly():
+                self.textEdit.setReadOnly(False)
     def onTextChanged(self,key):
 
         document=self.textEdit.document()
@@ -230,11 +238,17 @@ class TextEditDemo(QWidget):
 
     def insertLabel(self):
         img = QImage("./test.jpg")
-
         cursor = self.textEdit.textCursor()
-        cursor.insertBlock()
+        tableFormat = QTextTableFormat()
 
-        cursor.insertImage(img, "myimage");
+        tableFormat.setCellPadding(0)
+        tableFormat.setCellSpacing(0)
+        cursor.insertBlock()
+        table=cursor.insertTable(1, 1, tableFormat);
+        table.setProperty("id", "mytable1")
+        c = table.cellAt(0, 0).firstCursorPosition()
+
+        c.insertImage(img, "myimage");
     @pyqtSlot(str)
     def OnMousePressed(self,text):
 
