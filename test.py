@@ -6,6 +6,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import requests
+
 from PIL import Image
 import chardet
 
@@ -40,12 +41,11 @@ class TextEditDemo(QWidget):
     def __init__(self,parent=None):
         super(TextEditDemo, self).__init__(parent)
         self.setWindowTitle('QTextEdit 例子')
-
+        self.activeNode=None
         #定义窗口的初始大小
         self.resize(800,600)
         self.setMinimumSize(800,600)
         #创建多行文本框
-        self.scroll=QScrollArea(objectName="ScrollView")
         w= QWidget()
         #self.textEdit = MyTextEdit(w)
         self.textEdit = MyTextEdit("test1")
@@ -74,20 +74,16 @@ class TextEditDemo(QWidget):
         self.mylayout.setContentsMargins(QMargins(0,0,0,0))
         self.mylayout.setSpacing(0)
         self.mylayout.addWidget(self.textEdit)
-        self.mylayout.insertStretch(-1,0)
+        #self.mylayout.insertStretch(-1,0)
         #w.setStyleSheet("background:grey")
         w.setLayout(self.mylayout)
         w.setContentsMargins(0,0,0,0)
-        self.scroll.setFrameStyle(QFrame.NoFrame)
-        self.scroll.setWidget(w)
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setContentsMargins(0,0,0,0)
 
         with open("Data/ScrollBar.qss", "rb") as fp:
             content = fp.read()
             encoding = chardet.detect(content) or {}
             content = content.decode(encoding.get("encoding") or "utf-8")
-        self.scroll.setStyleSheet(content)
+
         #scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
         l2=QHBoxLayout()
@@ -99,7 +95,7 @@ class TextEditDemo(QWidget):
         w2.setLayout(l2)
 
         self.layout.addWidget(w2)
-        self.layout.addWidget(self.scroll)
+        self.layout.addWidget(w)
         #设置布局
         self.setLayout(self.layout)
 
@@ -114,7 +110,7 @@ class TextEditDemo(QWidget):
 
     def addEventListener(self,textEdit):
 
-        textEdit.setFixedHeight(28)
+        #textEdit.setFixedHeight(28)
         textEdit.textChanged.connect(lambda: self.onTextChanged(textEdit.key))
         textEdit.selectionChanged.connect(lambda:self.onSelectionChanged(textEdit.key))
         textEdit.cursorPositionChanged.connect(self.onCursorPositionChanged)
@@ -132,8 +128,12 @@ class TextEditDemo(QWidget):
             c=table.cellAt(0,0).firstCursorPosition()
 
             print("table info",self.textEdit.cursorRect(c), table.property("id"))
-
-            self.textEdit.setReadOnly(True)
+            if table.property("id")=="image":
+                self.textEdit.setReadOnly(True)
+                tableFormat = table.format()
+                tableFormat.setBorderBrush(Qt.red)
+                table.setFormat(tableFormat)
+                self.activeNode=table
             pass
             '''
             #可以获取td的位置
@@ -149,8 +149,15 @@ class TextEditDemo(QWidget):
         else:
             if self.textEdit.isReadOnly():
                 self.textEdit.setReadOnly(False)
-    def onTextChanged(self,key):
+            if self.activeNode:
 
+                tableFormat = self.activeNode.format()
+                tableFormat.setBorderBrush(Qt.transparent)
+                self.activeNode.setFormat(tableFormat)
+                self.activeNode=None
+
+    def onTextChanged(self,key):
+        return
         document=self.textEdit.document()
         newHeight = document.size().height()+5
         if newHeight != self.textEdit.height():
@@ -182,7 +189,8 @@ class TextEditDemo(QWidget):
 
         cursor.insertImage(img, "myimage");
         '''
-        self.insertImage()
+        html = self.textEdit.toHtml()
+        print(html)
     def insertImage(self):
         url = "http://photocdn.sohu.com/20120128/Img333056814.jpg"
         res = requests.get(url)
@@ -218,13 +226,22 @@ class TextEditDemo(QWidget):
         cursor=self.textEdit.textCursor()
         #cursor.movePosition(0);
         tableFormat=QTextTableFormat()
-        tableFormat.setCellPadding(0)
-        tableFormat.setCellSpacing(0)
-        cursor.insertBlock()
-        print("table",self.textEdit.cursorRect())
-        #这个地方记住table的位置
+        tableFormat.setBorderStyle(QTextFrameFormat.BorderStyle_Inset);
+        tableFormat.setBorder(1);
+        tableFormat.setBorderBrush(Qt.red)
+        tableFormat.setCellPadding(5)
+        tableFormat.setCellSpacing(-1)
+        tableFormat.setWidth(QTextLength(QTextLength.PercentageLength, 100));
 
-        cursor.insertTable(2, 3,tableFormat);
+        vLens=[QTextLength(QTextLength.PercentageLength,33.3333),
+               QTextLength(QTextLength.PercentageLength,33.3333),
+               QTextLength(QTextLength.PercentageLength,33.3333)]
+        tableFormat.setColumnWidthConstraints(vLens)
+        cursor.insertBlock()
+
+        table=cursor.insertTable(2, 3,tableFormat);
+
+        table.setProperty("id", "table")
 
     def btnPress3_clicked(self):
         self.deleteTable()
@@ -240,12 +257,14 @@ class TextEditDemo(QWidget):
         img = QImage("./test.jpg")
         cursor = self.textEdit.textCursor()
         tableFormat = QTextTableFormat()
-
-        tableFormat.setCellPadding(0)
+        tableFormat.setBorder(2)
+        tableFormat.setBorderBrush(Qt.transparent)
+        tableFormat.setCellPadding(-1)
         tableFormat.setCellSpacing(0)
+        tableFormat.setAlignment(Qt.AlignHCenter)
         cursor.insertBlock()
         table=cursor.insertTable(1, 1, tableFormat);
-        table.setProperty("id", "mytable1")
+        table.setProperty("id", "image")
         c = table.cellAt(0, 0).firstCursorPosition()
 
         c.insertImage(img, "myimage");
