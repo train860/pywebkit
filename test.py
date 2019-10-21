@@ -124,6 +124,7 @@ class TextEditDemo(QWidget):
     def onCursorPositionChanged(self):
         textCursor = self.textEdit.textCursor()
         table=textCursor.currentTable()
+        print("table=====>",table)
         if table!=None:
             c=table.cellAt(0,0).firstCursorPosition()
 
@@ -146,7 +147,9 @@ class TextEditDemo(QWidget):
             #r = self.textEdit.cursorRect()
             #self.label.move(r.x(), r.y())
             '''
+
         else:
+
             if self.textEdit.isReadOnly():
                 self.textEdit.setReadOnly(False)
             if self.activeNode:
@@ -191,6 +194,7 @@ class TextEditDemo(QWidget):
         '''
         html = self.textEdit.toHtml()
         print(html)
+
     def insertImage(self):
         url = "http://photocdn.sohu.com/20120128/Img333056814.jpg"
         res = requests.get(url)
@@ -240,7 +244,7 @@ class TextEditDemo(QWidget):
         cursor.insertBlock()
 
         table=cursor.insertTable(2, 3,tableFormat);
-
+        table.setObjectName("test123")
         table.setProperty("id", "table")
 
     def btnPress3_clicked(self):
@@ -262,12 +266,18 @@ class TextEditDemo(QWidget):
         tableFormat.setCellPadding(-1)
         tableFormat.setCellSpacing(0)
         tableFormat.setAlignment(Qt.AlignHCenter)
-        cursor.insertBlock()
+
+        #cursor.insertBlock()
         table=cursor.insertTable(1, 1, tableFormat);
         table.setProperty("id", "image")
-        c = table.cellAt(0, 0).firstCursorPosition()
+        cell=table.cellAt(0, 0)
+        chart=QTextCharFormat()
+        chart.setFontWeight(800)
+        cell.setFormat(chart)
+        c = cell.firstCursorPosition()
 
         c.insertImage(img, "myimage");
+        c.insertText("333333")
     @pyqtSlot(str)
     def OnMousePressed(self,text):
 
